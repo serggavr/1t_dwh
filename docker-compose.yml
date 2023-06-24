@@ -1,0 +1,17 @@
+version: "1.0"
+services:
+  db_dwh:
+    build: db
+    ports:
+      - 5432:5432
+    volumes:
+      - db_dwh:/var/lib/postgresql/data
+      - ./db/ddl/init_structure.sql:/docker-entrypoint-initdb.d/ddl.sql
+      - ./db/dml/init_data.sql:/docker-entrypoint-initdb.d/dml.sql
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      retries: 5
+    restart: always
+volumes:
+  db_dwh:
