@@ -16,9 +16,9 @@
 **income_fact/income_plan** — отношение фактического дохода к запланированному.  
 ```sql
 WITH fact_plan AS (
-    SELECT 
+    SELECT
         plan.shop_name AS shop,
-        concat(extract(month FROM plan.plan_date)) AS month,
+        extract(month FROM plan.plan_date) AS month,
         product.product_name AS product,
         (CASE
             WHEN shop_name = 'dns' THEN (SELECT sum(sales_cnt) FROM shop_dns WHERE shop_dns.product_id = plan.product_id)
@@ -39,13 +39,13 @@ WITH fact_plan AS (
     GROUP BY shop, month, product, price, sales_fact, plan.product_id
     ORDER BY shop, month
 )
-SELECT 
+SELECT
     month,
     shop,
     product,
     sales_fact,
     sales_plan,
-    round(cast((sales_fact::double precision / sales_plan::double precision) AS numeric), 2) AS seles_fact_plan,
+    round(cast((sales_fact / sales_plan::double precision) AS numeric), 2) AS seles_fact_plan,
     (price * sales_fact) AS income_fact,
     (price * sales_plan) AS income_plan,
     cast(((price * sales_fact) - (price * sales_plan)) AS numeric) AS income_fact_plan
