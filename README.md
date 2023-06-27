@@ -21,9 +21,9 @@ WITH fact_plan AS (
         concat(extract(month FROM plan.plan_date)) AS month,
         product.product_name AS product,
         (CASE
-            WHEN shop_name = 'ДНС' THEN (SELECT sum(sales_cnt) FROM shop_dns WHERE shop_dns.product_id = plan.product_id)
-            WHEN shop_name = 'Мвидео' THEN (SELECT sum(sales_cnt) FROM shop_mvideo WHERE shop_mvideo.product_id = plan.product_id)
-            WHEN shop_name = 'Ситилинк' THEN (SELECT sum(sales_cnt) FROM shop_sitilink WHERE shop_sitilink.product_id = plan.product_id)
+            WHEN shop_name = 'dns' THEN (SELECT sum(sales_cnt) FROM shop_dns WHERE shop_dns.product_id = plan.product_id)
+            WHEN shop_name = 'mvideo' THEN (SELECT sum(sales_cnt) FROM shop_mvideo WHERE shop_mvideo.product_id = plan.product_id)
+            WHEN shop_name = 'sitilink' THEN (SELECT sum(sales_cnt) FROM shop_sitilink WHERE shop_sitilink.product_id = plan.product_id)
         END)  AS sales_fact,
         (CASE
             WHEN plan.product_id = 1 THEN (SELECT sum(plan.plan_cnt) FROM plan WHERE plan.product_id = 1)
@@ -53,7 +53,7 @@ FROM fact_plan
 ORDER BY month, shop
 ```  
 
-Схема БД: ![Схема БД "Библиотека""](./dwh_schema.png)
+Схема БД: ![Схема БД "Библиотека""](./dwh_schema.jpg)
 
 
 
