@@ -15,42 +15,29 @@
 **income_plan** — планируемый доход,  
 **income_fact/income_plan** — отношение фактического дохода к запланированному.  
 ```sql
-WITH fact_plan AS (
-    SELECT
-        plan.shop_name AS shop,
-        extract(month FROM plan.plan_date) AS month,
-        product.product_name AS product,
-        (CASE
-            WHEN shop_name = 'dns' THEN (SELECT sum(sales_cnt) FROM shop_dns WHERE shop_dns.product_id = plan.product_id)
-            WHEN shop_name = 'mvideo' THEN (SELECT sum(sales_cnt) FROM shop_mvideo WHERE shop_mvideo.product_id = plan.product_id)
-            WHEN shop_name = 'sitilink' THEN (SELECT sum(sales_cnt) FROM shop_sitilink WHERE shop_sitilink.product_id = plan.product_id)
-        END)  AS sales_fact,
-        (CASE
-            WHEN plan.product_id = 1 THEN (SELECT sum(plan.plan_cnt) FROM plan WHERE plan.product_id = 1)
-            WHEN plan.product_id = 2 THEN (SELECT sum(plan.plan_cnt) FROM plan WHERE plan.product_id = 2)
-            WHEN plan.product_id = 3 THEN (SELECT sum(plan.plan_cnt) FROM plan WHERE plan.product_id = 3)
-        END) AS sales_plan,
-        product.price AS price
-    FROM plan
-        INNER JOIN shop_dns ON plan.plan_date = shop_dns.date
-        INNER JOIN shop_mvideo ON plan.plan_date = shop_mvideo.date
-        INNER JOIN shop_sitilink ON plan.plan_date = shop_sitilink.date
-        INNER JOIN product ON plan.product_id = product.product_id
-    GROUP BY shop, month, product, price, sales_fact, plan.product_id
-    ORDER BY shop, month
-)
-SELECT
-    month,
-    shop,
-    product,
-    sales_fact,
-    sales_plan,
-    round(cast((sales_fact / sales_plan::double precision) AS numeric), 2) AS seles_fact_plan,
-    (price * sales_fact) AS income_fact,
-    (price * sales_plan) AS income_plan,
-    cast(((price * sales_fact) - (price * sales_plan)) AS numeric) AS income_fact_plan
-FROM fact_plan
-ORDER BY month, shop
+with sales as (
+select * from 
+(select * from public.shop_dns sd
+	union all
+ select * from public.shop_mvideo sm
+ 	union all
+ select * from public.shop_sitilink ss 
+) as sl)
+	select
+		date_part('month', date) as month,
+		shops.shop_name as shop_name,
+		product.product_name,
+		sum(sales_cnt) as sales_fact,
+		sum(plan_cnt) as sales_plan,
+		sum(sales_cnt)/sum(plan_cnt) AS seles_fact_plan,
+		sum(sales_cnt) * price AS income_fact,
+		sum(plan_cnt) * price AS income_plan,
+		(sum(sales_cnt) * price) - (sum(plan_cnt) * price) AS income_fact_plan
+	from sales
+join shops on sales.shop_id = shops.shop_id
+join plan on plan.shop_name = shops.shop_name
+join product on product.product_id = sales.product_id
+group by month, shops.shop_name, product.product_name, shops.shop_name, product.price
 ```  
 
 Схема БД: ![Схема БД "Библиотека""](./dwh_schema.jpg)
